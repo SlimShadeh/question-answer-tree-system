@@ -1,0 +1,424 @@
+#include <iostream>
+#include <string>
+#include <bits/stdc++.h>
+using namespace std;
+int k = 0;
+enum vrsta{pitanje=0,odgovor=1};
+struct Cvor {
+    struct Cvor* sin[10];
+    int ocena = 0, br = 0;
+    vrsta tip;
+    string naziv;
+};
+
+Cvor* levelOrder(Cvor *cvor,const string &a) {
+    queue <Cvor*> q;
+    Cvor* next = cvor;
+    q.push(next);
+    while (!q.empty()) {
+        next = q.front();
+        //cout << next->naziv << "\n";
+        if (next->naziv == a) return next;
+        q.pop();
+        int j = 0;
+        while (j < next->br) {
+            q.push(next->sin[j]);
+            j++;
+        }
+    }
+    return nullptr;
+}
+
+void novSistem(Cvor *cvor[]){
+    for(int i=0;i<k;i++){
+        queue <Cvor*> q;
+        Cvor* next = cvor[i];
+        q.push(next);
+        while (!q.empty()) {
+            next = q.front();
+            //cout << next->naziv << "\n";
+            q.pop();
+            int j = 0;
+            while (j < next->br) {
+                q.push(next->sin[j]);
+                j++;
+            }
+            delete next;
+            next=nullptr;
+        }
+    }
+    k=0;
+}
+
+void dodavanjePitanja(Cvor *cvor[]) {
+    cout << "Koje je vase pitanje: \n";
+    cvor[k] = new Cvor;
+    getline(cin>>ws,cvor[k]->naziv);
+    cvor[k]->tip = pitanje;
+    //cout << cvor[k]->naziv << "\n" << k <<"\n";
+    k++;
+}
+
+void dodavanjeOdgovora(Cvor *cvor[]) {
+    cout << "Na koje pitanje ili odgovor zelite da dodate odgovor: \n";
+    string a;
+    getline(cin>>ws,a);
+    Cvor* novi = nullptr;
+    for (int i = 0; i < k; i++) {
+        novi = levelOrder(cvor[i], a);
+        if (novi != nullptr) break;
+    }
+    if (novi == nullptr) {
+
+        cout << "Trazeno pitanje/odgovor nije nadjen\n";
+        return;
+    }
+    else
+    {
+        cout << "Unesite vas odgovor: \n";
+        int p = novi->br;
+        novi->sin[p]=new Cvor;
+        getline(cin>>ws,novi->sin[p]->naziv);
+        novi->sin[p]->tip = odgovor;
+        novi->br++;
+    }
+}
+
+Cvor* pretragaPitanja(Cvor *cvor[]) {
+    string a;
+    getline(cin>>ws,a);
+    for (int i = 0; i < k; i++) {
+        if(a== cvor[i]->naziv) {
+            cout << "Pitanje je nadjeno na poziciji " << i+1 <<".\n";
+            return cvor[i];
+        }
+    }
+    cout << "Pitanje nije nadjeno. \n";
+    return nullptr;
+}
+
+Cvor* pretragaOdgovora(Cvor *cvor[]){
+    cout << "Za koje pitanje je vezan vas odgovor\n";
+    Cvor * pitanje =pretragaPitanja(cvor);
+
+    if(pitanje==nullptr){
+        return nullptr;
+    }
+
+    else{
+        cout <<"Koji odgovor zelite da nadjete: \n";
+        string b;
+        getline(cin>>ws,b);
+        queue <Cvor*> q;
+        Cvor* next = pitanje;
+        q.push(next);
+        while (!q.empty()) {
+            next = q.front();
+            //cout << next->naziv << "\n";
+            if (next->naziv == b) {
+                cout << "Odgovor je nadjen. \n" << "Ocena odgovora je " << next->ocena <<".\n";
+                return next;
+            }
+            q.pop();
+            int j = 0;
+            while (j < next->br) {
+                q.push(next->sin[j]);
+                j++;
+            }
+        }
+    }
+    cout << "Trazeni odgovor nije nadjen.\n";
+    return nullptr;
+}
+
+void povecavanjeOcene(Cvor *cvor[]){
+    Cvor *povecaj= pretragaOdgovora(cvor);
+    if(povecaj==nullptr){
+        cout <<"Trazeni odgovor nije nadjen.\n";
+        return;
+    }
+    else if(povecaj->tip==pitanje){
+        cout <<"Povecavanje ocene pitanjima nije moguce.\n";
+        return;
+    }
+    else{
+        cout << "Unesite ocenu 1-10 za dat odgovor. \n";
+        int p;
+        cin >> p;
+        if(p<1){
+            cout << "Unosenje date ocene nije dozvoljeno.\n";
+            exit(-2);
+        }
+        else if(p>10){
+            cout << "Ocena ne moze biti veca od 10. \n";
+            return;
+        }
+        povecaj->ocena=p;
+        cout << "Odgovor" << povecaj->naziv << "sada ima ocenu " << povecaj->ocena << "\n";
+    }
+}
+
+void sortiranjeOdgovora(Cvor *cvor[]){
+    for(int i=0;i<k;i++){
+        queue <Cvor*> q;
+        Cvor* next = cvor[i];
+        q.push(next);
+        while (!q.empty()) {
+            next = q.front();
+            //cout << next->naziv << "\n";
+            for(int j=0;i<(next->br)-1;j++){
+                for(int s=j+1;s<(next->br);s++){
+                    if(next->sin[s]->ocena > next->sin[j]->ocena){
+                        Cvor *temp=next->sin[s];
+                        next->sin[s]=next->sin[j];
+                        next->sin[j]=temp;
+                    }
+                }
+            }
+            q.pop();
+            int j = 0;
+            while (j < next->br) {
+                q.push(next->sin[j]);
+                j++;
+            }
+        }
+    }
+}
+
+void ispisPitanja(Cvor *cvor[]){
+    cout << "Pitanja: \n \n";
+    for(int i=0;i<k;i++){
+        cout <<i+1 << ". " << cvor[i]->naziv << "\n";
+    }
+}
+
+void ispisJednogPitanja(Cvor *cvor[]){
+    cout << "Kako glasi pitanje koje zelite da ispisete? \n";
+    Cvor *pitanje= pretragaPitanja(cvor);
+    if(pitanje==nullptr){
+        return;
+    }
+    else{
+        queue <Cvor*> q;
+        Cvor* next = pitanje;
+        q.push(next);
+        while (!q.empty()) {
+            next = q.front();
+            if(next->tip==0){
+                cout << "Pitanje: \n" << next->naziv <<"\n\n";
+            }
+            else{
+                cout << next->naziv << " (ocena: " << next->ocena <<")\n";
+            }
+            q.pop();
+            int j = 0;
+            while (j < next->br) {
+                q.push(next->sin[j]);
+                j++;
+            }
+        }
+    }
+}
+
+Cvor *najvecaOcena(Cvor *cv[]){
+    int maks=0;
+    int ind_maks=0;
+    for(int i=0;i<k;i++){
+        queue <Cvor*> q;
+        Cvor* next = cv[i];
+        q.push(next);
+        while (!q.empty()) {
+            next = q.front();
+            if(next->ocena> maks) {
+                maks=next->ocena;
+                ind_maks=i;
+            }
+            q.pop();
+            int j = 0;
+            while (j < next->br) {
+                q.push(next->sin[j]);
+                j++;
+            }
+        }
+    }
+    cout << "Pitanje sa najvecom ocenom je: \n" << cv[ind_maks]->naziv << "\nOcena: " << maks <<"\n";
+    return cv[ind_maks];
+}
+
+void brisanjeOdgovora(Cvor *cv[]){
+    cout << "U kojem pitanju se nalazi odgovor koji zelite da izbrisete? \n";
+    Cvor *pitanje = pretragaPitanja(cv);
+    if(pitanje==nullptr){
+        return;
+    }
+    cout <<"Koji odgovor zelite da izbrisete: \n";
+    string b;
+    getline(cin>>ws,b);
+    queue <Cvor*> q;
+    Cvor* next = pitanje;
+    q.push(next);
+    int poz=0,brejk=0;
+    while (!q.empty()) {
+        next = q.front();
+        //cout << next->naziv << "\n";
+        for(int i=0;i<next->br;i++){
+            if(next->sin[i]->naziv==b){
+                brejk=1;
+                poz=i;
+                break;
+            }
+        }
+        if(brejk==1) break;
+        q.pop();
+        int j = 0;
+        while (j < next->br) {
+            q.push(next->sin[j]);
+            j++;
+        }
+    }
+    if(brejk==0){
+        cout <<" Trazeni odgovor nije nadjen. \n";
+        return;
+    }
+    Cvor *izbris=next->sin[poz];
+    for(int j=poz;j<next->br-1;j++){
+        next->sin[j]=next->sin[j+1];
+    }
+    next->br--;
+    while(!q.empty()){
+        q.pop();
+    }
+
+    next=izbris;
+    q.push(next);
+    while (!q.empty()) {
+        next = q.front();
+        //cout << next->naziv << "\n";
+        q.pop();
+        int j = 0;
+        while (j < next->br) {
+            q.push(next->sin[j]);
+            j++;
+        }
+        delete next;
+        next==nullptr;
+    }
+}
+
+void brisanjePitanja(Cvor *cv[]){
+    cout << "Koje pitanje zelite da izbrisete: \n";
+    string a;
+    getline(cin>>ws,a);
+    int i;
+    Cvor *cvor1= nullptr;
+    for (i=0; i < k; i++) {
+        if(a== cv[i]->naziv) {
+            cout << "Pitanje je nadjeno na poziciji " << i+1 <<".\n";
+            cvor1=cv[i];
+            break;
+        }
+    }
+    if(cvor1==nullptr){
+        cout << "Pitanje nije nadjeno. \n";
+        return;
+    }
+    else{
+        queue <Cvor*> q;
+        Cvor* next = cvor1;
+        q.push(next);
+        while (!q.empty()) {
+            next = q.front();
+            //cout << next->naziv << "\n";
+            q.pop();
+            int j = 0;
+            while (j < next->br) {
+                q.push(next->sin[j]);
+                j++;
+            }
+            delete next;
+            next=nullptr;
+        }
+    }
+    for(int j=i;j<k;j++){
+        cv[j]=cv[j+1];
+    }
+    k--;
+}
+
+void meni() {
+    cout << "\n"
+         << "1. Dodavanje novog pitanja\n"
+         << "2. Dodavanje odgovora na neki odgovor ili pitanje\n"
+         << "3. Pretraga svih pitanja\n"
+         << "4. Pretraga svih odgovora\n"
+         << "5. Povecavanje ocene nekom odgovoru\n"
+         << "6. Uredjivanje odgovora na osnovu ocena\n"
+         << "7. Ispisivanje svih pitanja\n"
+         << "8. Ispis odredjenog pitanja sa njemu pridruzenim odgovorima\n"
+         << "9. Ispisivanje pitanja sa najvecom ocenom\n"
+         << "10. Brisanje odgovora ili komentara i svih komentara na taj odgovor\n"
+         << "11. Brisanje odredjenog pitanja i svih povezanih odgovora\n"
+         << "12. Napravi nov sistem pitanja (Upozorenje: Sva prosla pitanja i odgovori se brisu)\n"
+         << "13. Izlazak iz programa \n";
+
+}
+
+int main() {
+    Cvor *cv[100];
+    Cvor *pitanje=nullptr;
+    Cvor *odgovor=nullptr;
+    Cvor* najvOcena=nullptr;
+    while (true) {
+        int opcija;
+        meni();
+        cin >> opcija;
+        switch ((int)opcija) {
+            case 0:
+                cout <<"Zabranjen je unos karaktera i nule, samo brojevi su dozvoljeni\n";
+                return -1;
+            case 1:
+                dodavanjePitanja(cv);
+                break;
+            case 2:
+                dodavanjeOdgovora(cv);
+                break;
+            case 3:
+                cout << "Koje pitanje zelite da nadjete?\n";
+                pitanje = pretragaPitanja(cv);
+                break;
+            case 4:
+                odgovor= pretragaOdgovora(cv);
+                break;
+            case 5:
+                povecavanjeOcene(cv);
+                break;
+            case 6:
+                sortiranjeOdgovora(cv);
+                break;
+            case 7:
+                ispisPitanja(cv);
+                break;
+            case 8:
+                ispisJednogPitanja(cv);
+                break;
+            case 9:
+                najvOcena= najvecaOcena(cv);
+                break;
+            case 10:
+                brisanjeOdgovora(cv);
+                break;
+            case 11:
+                brisanjePitanja(cv);
+                break;
+            case 12:
+                novSistem(cv);
+                break;
+            case 13:
+                cout << "Izabrali ste opciju za gasenje programa, hvala na izdvojenom vremenu.\n";
+                return 0;
+            default:
+                cout<<"Opcija ne postoji, molimo vas da izaberete validnu opciju.\n";
+                break;
+        }
+    }
+}
